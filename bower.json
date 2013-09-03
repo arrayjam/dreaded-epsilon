@@ -1,0 +1,15 @@
+{
+  "name": "dreaded-epsilon",
+  "version": "0.0.0",
+  "main": "index.html",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "d3": "git://github.com/mbostock/d3.git#~3.3.2"
+  }
+}
