@@ -4,7 +4,6 @@ var data = {
   right_h: 0.15
 };
 
-data.right_w = 1 - data.left_w;
 console.log(data);
 
 var color = d3.scale.category10();
@@ -14,8 +13,14 @@ var scale = d3.scale.linear()
 
 var svg = d3.select("body").append("svg")
   .append("g")
-  .attr("transform", "translate(" + [10, 10] + ")")
-  .datum([data]);
+  .attr("transform", "translate(" + [30, 30] + ")")
+  .data([data]);
+
+var labels = d3.select("svg").append("g");
+
+var square = bayesSquare().width(10).height(10).left(10).top(10);
+svg.call(square);
+
 
 /*  W  M
  * -------
@@ -24,8 +29,65 @@ var svg = d3.select("body").append("svg")
  * |  |  | ~L
  * ------
  */
+
+function bayesSquare() {
+  var top,
+    left,
+    width,
+    height;
+  var chart = function(selection) {
+
+    selection.each(function(data) {
+      var div = d3.select(this);
+
+      var rect = div.selectAll("rect").data([data]);
+
+      if (rect.empty()) {
+        rect.enter().append("rect");
+      }
+      console.log(width);
+      console.log(rect);
+
+      rect.attr({
+        width: function(d) { return 10 * d.left_h; },
+        height: height,
+        x: left,
+        y: top
+      });
+
+    });
+  };
+
+  chart.top = function(_) {
+    if (!arguments.length) return top;
+    top = _;
+    return chart;
+  };
+
+  chart.left = function(_) {
+    if (!arguments.length) return left;
+    left = _;
+    return chart;
+  };
+
+  chart.width = function(_) {
+    if (!arguments.length) return width;
+    width = _;
+    return chart;
+  };
+
+  chart.height = function(_) {
+    if (!arguments.length) return height;
+    height = _;
+    return chart;
+  };
+
+  return chart;
+}
+
 function update() {
   var rect, text, line, circle;
+
   rect = svg.selectAll(".top.left")
     .data(function(d) { return d; });
   rect.enter().append("rect");
@@ -38,17 +100,6 @@ function update() {
       fill: "none",
       stroke: "black"
     });
-
-//  text = svg.selectAll("text.top.left")
-//    .data(function(d) { return d; });
-//  text.enter().append("text")
-//    .attr({
-//      class: "top left",
-//      x: function(d) { return scale(d.left_w) / 2; },
-//      y: function(d) { return scale(d.left_h) / 2; },
-//    })
-//    .style("text-anchor", "middle")
-//    .text("P(Long Hair | Woman)");
 
   rect = svg.selectAll(".bottom.left")
     .data(function(d) { return d; });
@@ -219,7 +270,7 @@ function update() {
 //          //});
 //        })
 //       );
-update();
+//update();
 
 
 
