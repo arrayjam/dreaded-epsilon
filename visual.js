@@ -6,18 +6,112 @@ var data = {
 
 console.log(data);
 
-var viz = BayesVisual().side(300);
-console.log(viz.side());
-var bv = d3.selectAll("bv");
+var area = BayesArea().side(300);
+var line = BayesLine().width(300);
+var ba = d3.selectAll("ba");
+var bl = d3.selectAll("bl");
 
 var update = function() {
-  bv
-    .data([data])
-    .call(viz);
+  ba.data([data]).call(area);
+  bl.data([data]).call(line);
+  var w = data.pos_likelihood * data.prior;
+  var m = data.neg_likelihood * (1 - data.prior);
+
+  var r = w / (m + w);
+  console.log(r);
+
 };
 update();
 
-function BayesVisual() {
+function BayesLine() {
+  var width = 500,
+    height = 50,
+    scale = d3.scale.linear().domain([0, 1]).rangeRound([0, width]),
+    left_scale = d3.scale.linear().domain([0, 1]).rangeRound([0, width]),
+    right_scale = d3.scale.linear().domain([0, 1]).rangeRound([0, width]),
+    far_left, near_left, near_right, far_right;
+
+  var chart = function(selection) {
+    scale.range([0, width]);
+
+    selection.each(function(data) {
+      left_scale.rangeRound([scale(0), scale(data.prior)]);
+      right_scale.rangeRound([scale(0), scale(1 - data.prior)]);
+      console.log("here", left_scale.domain(), left_scale.range());
+      var div = d3.select(this);
+
+      var g = div.select("svg g");
+
+      if (g.empty()) {
+        g = div.append("svg").append("g");
+
+        far_left = g.append("rect")
+          .attr({
+            class: "outline far left",
+            x: left_scale(0) + 0.5,
+            y: 0.5,
+            height: height
+          });
+
+        near_left = g.append("rect")
+          .attr({
+            class: "outline near left",
+            y: 0.5,
+            height: height
+          });
+
+        near_right = g.append("rect")
+          .attr({
+            class: "outline near right",
+            y: 0.5,
+            height: height
+          });
+
+        far_right = g.append("rect")
+          .attr({
+            class: "outline far right",
+            y: 0.5,
+            height: height
+          });
+
+      }
+
+      far_left
+        .attr({
+          width: function(d) { return left_scale(1 - d.pos_likelihood); }
+        });
+
+      near_left
+        .attr({
+          x: function(d) { return left_scale(1 - d.pos_likelihood) + 0.5; },
+          width: function(d) { return left_scale(d.pos_likelihood); }
+        });
+
+      near_right
+        .attr({
+          x: left_scale(1) + right_scale(0) + 0.5,
+          width: function(d) { return right_scale(d.neg_likelihood); }
+        });
+
+      far_right
+        .attr({
+          x: function(d) { return left_scale(1) + right_scale(d.neg_likelihood) + 0.5; },
+          width: function(d) { return right_scale(1 - d.neg_likelihood); }
+        });
+    });
+
+  };
+
+  chart.width = function(_) {
+    if (!arguments.length) return width;
+    width = _;
+    return chart;
+  };
+
+  return chart;
+}
+
+function BayesArea() {
   var side = 300,
     scale = d3.scale.linear().domain([0, 1]).range([0, side]),
     top_left, top_right, bottom_left, bottom_right,
@@ -62,7 +156,7 @@ function BayesVisual() {
         var horiz_drag = d3.behavior.drag()
           .on("drag", function(d) {
             var x = scale.invert(d3.event.x);
-            if (x < 0 || x > 1) return;
+            if (x <= 0 || x >= 1) return;
             d.prior = x;
             update();
           });
@@ -78,7 +172,7 @@ function BayesVisual() {
         var left_vert_drag = d3.behavior.drag()
           .on("drag", function(d) {
             var y = scale.invert(d3.event.y);
-            if (y < 0 || y > 1) return;
+            if (y <= 0 || y >= 1) return;
             d.pos_likelihood = y;
             update();
           });
@@ -93,7 +187,7 @@ function BayesVisual() {
         var right_vert_drag = d3.behavior.drag()
           .on("drag", function(d) {
             var y = scale.invert(d3.event.y);
-            if (y < 0 || y > 1) return;
+            if (y <= 0 || y >= 1) return;
             d.neg_likelihood = y;
             update();
           });
@@ -109,7 +203,7 @@ function BayesVisual() {
           .on("drag", function(d) {
             var x = scale.invert(d3.event.x);
             var y = scale.invert(d3.event.y);
-            if (x < 0 || x > 1 || y < 0 || y > 1) return;
+            if (x <= 0 || x >= 1 || y <= 0 || y >= 1) return;
             d.prior = x;
             d.pos_likelihood = y;
             update();
